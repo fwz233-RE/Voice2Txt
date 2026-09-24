@@ -7,12 +7,14 @@
 #      exe (runs fine on ARM64 Windows, but through x64 emulation).
 #
 # Usage:
-#   .\build.ps1                 # auto: SDK if available, else 5.1 fallback
+#   .\build.ps1                 # auto: SDK if available, else 5.1 fallback (win-arm64)
+#   .\build.ps1 -Arch x64       # native win-x64 single file (bin-x64\)
 #   .\build.ps1 -SelfContained  # SDK path: bundle the runtime (~70 MB)
 #   .\build.ps1 -ForceFramework # skip SDK even if installed
 #   .\build.ps1 -InstallSdk     # winget install .NET SDK 8 (ARM64)
 
 param(
+    [string]$Arch = 'arm64',
     [switch]$SelfContained,
     [switch]$ForceFramework,
     [switch]$InstallSdk
@@ -34,7 +36,12 @@ if ($InstallSdk) {
 
 $dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
 if ($dotnet -and -not $ForceFramework) {
-    # ---- Path 1: native ARM64 via .NET SDK ----
+    # ---- Path 1: native via .NET SDK ----
+    if ($Arch -eq 'x64') {
+        $outDir = Join-Path $root 'bin-x64'
+        New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+        $exe = Join-Path $outDir 'Voice2Txt.exe'
+    }
     $projDir = Join-Path $root 'build'
     New-Item -ItemType Directory -Force -Path $projDir | Out-Null
     $sc = if ($SelfContained) { 'true' } else { 'false' }
@@ -44,7 +51,7 @@ if ($dotnet -and -not $ForceFramework) {
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <RuntimeIdentifier>win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier>win-$Arch</RuntimeIdentifier>
     <SelfContained>$sc</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <AssemblyName>Voice2Txt</AssemblyName>

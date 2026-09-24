@@ -18,7 +18,7 @@ Windows 桌面语音输入小工具：**按住 `Ctrl+Alt` 说话**（热键可�
 
 ## 快速开始
 
-1. 从 [Releases](https://github.com/fwz233-RE/Voice2Txt/releases/latest) 下载 `Voice2Txt-win-arm64-v0.1.0.zip`，解压
+1. 从 [Releases](https://github.com/fwz233-RE/Voice2Txt/releases/latest) 下载对应架构的 zip（`win-arm64` 或 `win-x64`），解压
 2. 运行 `Voice2Txt.exe`（单文件，图标已内置），首次启动填入 Token Plan API Key（`tp-` 开头）
 3. 光标点进任意输入框 → **按住 `Ctrl+Alt`** 说话 → 松开，文字自动插入
 
@@ -28,7 +28,7 @@ Windows 桌面语音输入小工具：**按住 `Ctrl+Alt` 说话**（热键可�
 |---|---|
 | **按住 `Ctrl+Alt`**（默认，可在设置里改） | 开始录音，面板在光标旁呼出 |
 | 松开（任一键） | 面板消失，识别完成后自动粘贴插入 |
-| 按住「按住说话」按钮 | 同上（鼠标操作） |
+| 按住「按住说话」按钮 | 同上，但**面板保持打开**（适合在窗口里连续使用） |
 | 设置 → 录制热键… | 按下任意键实测绑定（`Fn` 等非常规键用这个） |
 | 设置 → 开机自启动 | 登录自动运行 |
 | 再次插入 | 把窗口文字重新粘贴出去 |
@@ -68,6 +68,7 @@ $env:MIMO_API_KEY = "tp-..."   # 或 DASHSCOPE_API_KEY / ALIYUN_API_KEY / VOICE_
 
 ```powershell
 .\build.ps1            # 产出 bin\Voice2Txt.exe（win-arm64 单文件）
+.\build.ps1 -Arch x64  # win-x64 版本（产出 bin-x64\）
 .\build.ps1 -InstallSdk # 没装 .NET SDK 8 时先装（arm64）
 .\run.ps1              # 不构建直接跑（PowerShell 7 内存编译）
 ```
@@ -75,6 +76,7 @@ $env:MIMO_API_KEY = "tp-..."   # 或 DASHSCOPE_API_KEY / ALIYUN_API_KEY / VOICE_
 | 命令 | 产物 | 说明 |
 |---|---|---|
 | `.\build.ps1` | win-arm64 单文件 exe | 需 .NET SDK 8；图标嵌入 exe |
+| `.\build.ps1 -Arch x64` | win-x64 单文件 exe | 普通 64 位机器用 |
 | `.\build.ps1 -SelfContained` | 较大单文件 | 目标机器无需装 .NET |
 | `.\build.ps1`（无 SDK 时） | .NET Framework 独立 exe | 兜底路径，ARM64 上走模拟 |
 

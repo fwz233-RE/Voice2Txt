@@ -1363,6 +1363,7 @@ namespace Voice2Txt
         volatile bool starting;
         volatile bool stopRequested;
         bool shownByTalk;
+        bool sessionByHotkey;
         int sessionId;
         IntPtr pasteTarget = IntPtr.Zero;
 
@@ -1404,7 +1405,7 @@ namespace Voice2Txt
             talkButton = new Button();
             talkButton.Text = "按住说话";
             talkButton.Size = new Size(96, 32);
-            talkButton.MouseDown += delegate { StartSession(); };
+            talkButton.MouseDown += delegate { sessionByHotkey = false; StartSession(); };
             talkButton.MouseUp += delegate { StopSession(); };
 
             Button copyBtn = MakeButton("复制", delegate
@@ -1462,18 +1463,22 @@ namespace Voice2Txt
             {
                 // Hold the hotkey: summon the panel near the cursor (without
                 // stealing focus, so auto-paste goes to the target app).
+                sessionByHotkey = true;
                 shownByTalk = !Visible;
                 ShowOverlay();
                 StartSession();
             }
             else
             {
-                // Release: the panel disappears unconditionally; the text is
-                // inserted when the recognition result arrives.
+                // Release: for hotkey sessions the panel disappears (text is
+                // inserted when ready). Button sessions keep the window open.
                 StopSession();
-                shownByTalk = false;
-                TopMost = false;
-                Hide();
+                if (sessionByHotkey)
+                {
+                    shownByTalk = false;
+                    TopMost = false;
+                    Hide();
+                }
             }
         }
 
@@ -1691,8 +1696,7 @@ namespace Voice2Txt
                 if (full.Length == 0)
                 {
                     SetStatus(errors > 0 ? "识别失败（" + errors + " 段出错）" : "没有识别到语音");
-                    TopMost = false;
-                    Hide();
+                    if (sessionByHotkey) { TopMost = false; Hide(); }
                     return;
                 }
                 HistoryStore.Append(full);
@@ -1705,8 +1709,7 @@ namespace Voice2Txt
                     SetStatus("已识别并粘贴" + suffix);
                 }
                 else SetStatus("已识别（自动粘贴已关闭）" + suffix);
-                TopMost = false;
-                Hide();   // result inserted -> panel auto-closes
+                if (sessionByHotkey) { TopMost = false; Hide(); }   // hotkey sessions auto-close; button sessions stay
             });
         }
 
