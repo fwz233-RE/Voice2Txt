@@ -1,105 +1,97 @@
 # Voice2Txt — Windows 语音转文字
 
-> 🔗 [项目主页](https://fwz233-RE.github.io/Voice2Txt/) · [最新版下载](https://github.com/fwz233-RE/Voice2Txt/releases/latest)
+> 🔗 [项目主页](https://fwz233-re.github.io/Voice2Txt/) · [最新版下载](https://github.com/fwz233-RE/Voice2Txt/releases/latest)
 
-[voicestick-mindex](https://github.com/fwz233-RE/voicestick-mindex)（macOS 版）的 Windows 移植版：**长按热键说话**，松开后调用小米 **MiMo-V2.5-ASR**（Token Plan API）识别，自动把文字粘贴到前台窗口。支持 Windows ARM64。
+Windows 桌面语音输入小工具：**按住 `Ctrl+Alt` 说话**（热键可改），松开后文字自动插入光标处。识别走小米 **MiMo-V2.5-ASR**（Token Plan API），支持 Windows ARM64（原生单文件）。
+
+> 前身为 macOS 版菜单栏语音输入应用，本仓库为 Windows 重制版（Win32/WinForms + Raw Input 实现）。
 
 ## 功能
 
-- **长按说话**：默认 `Fn` 长按录音、松开识别（点按无效，长按阈值 250ms）；通过 Raw Input 捕获 `Fn` 这类常规接口看不见的键
-- **自动粘贴**：识别完成后剪贴板写入并 `Ctrl+V` 粘贴到前台应用（可关闭）
-- **再次插入 / 复制**：粘贴失败时一键重插，结果始终保留在窗口里
-- **托盘常驻**：关闭窗口缩到托盘，热键继续可用
+- **按住说话**：默认 `Ctrl+Alt` 按住录音、松开识别（点按忽略，250ms 长按阈值防误触）；热键可改，支持「录制热键」实测绑定 `Fn` 等非常规键
+- **准实时上屏**：说话停顿即切段流水识别，文字逐段跳进面板，不必等松开（API 为整段式，故为「停顿切段」的准流式）
+- **面板自动呼出/消失**：按住热键时面板在光标旁置顶呼出（不抢焦点），松开/插入完成后自动隐藏
+- **自动插入**：识别完成写入剪贴板并 `Ctrl+V` 到前台窗口，带「再次插入 / 复制」兜底
 - **识别历史**：本地保存（`%APPDATA%\Voice2Txt\history.jsonl`），双击复制
-- **API Key 只存本机**：环境变量或配置文件，不进源码、不进构建产物
+- **开机自启**：设置内一键开关（HKCU Run 键）
+- **API Key 只存本机**：环境变量或配置文件，不进源码、不进产物、不进仓库
 
 ## 快速开始
 
-```powershell
-# 构建 exe
-.\build.ps1          # 得到 bin\Voice2Txt.exe
+1. 从 [Releases](https://github.com/fwz233-RE/Voice2Txt/releases/latest) 下载 `Voice2Txt-win-arm64-v0.1.0.zip`，解压
+2. 运行 `Voice2Txt.exe`（单文件，图标已内置），首次启动填入 Token Plan API Key（`tp-` 开头）
+3. 光标点进任意输入框 → **按住 `Ctrl+Alt`** 说话 → 松开，文字自动插入
 
-# 或者不构建直接跑（PowerShell 7 内存编译，原生 ARM64）
-.\run.ps1
-```
+## 使用
 
-首次运行会弹出设置窗口，粘贴 Token Plan API Key（`tp-` 开头）即可。
+| 操作 | 效果 |
+|---|---|
+| **按住 `Ctrl+Alt`**（默认，可在设置里改） | 开始录音，面板在光标旁呼出 |
+| 松开（任一键） | 面板消失，识别完成后自动粘贴插入 |
+| 按住「按住说话」按钮 | 同上（鼠标操作） |
+| 设置 → 录制热键… | 按下任意键实测绑定（`Fn` 等非常规键用这个） |
+| 设置 → 开机自启动 | 登录自动运行 |
+| 再次插入 | 把窗口文字重新粘贴出去 |
+| 复制 / 清空 / 历史 | 剪贴板、清框、历史记录（双击条目复制） |
+| 关闭窗口 | 缩到托盘，热键继续可用 |
+
+热键格式：`Ctrl+Alt` / `Ctrl+Shift+Space` / `Alt+F2` / `VK:500`（录制捕获的原始键 id），支持组合键与纯修饰键。
+
+### 关于 Fn 键
+
+`Fn` 多为键盘固件层按键，是否上报系统因键盘而异。本程序通过 Raw Input 捕获（含未映射键），部分键盘的 Fn 可直接绑定；若捕获不到，请用「录制热键」换绑其它键。
 
 ## 识别接口
 
 小米开放平台 Token Plan（OpenAI 兼容格式）：
 
 - `POST https://token-plan-cn.xiaomimimo.com/v1/chat/completions`（集群 cn/sgp/ams 换 BASE_URL）
-- 请求头 `api-key: tp-...`
-- 请求体 `model=mimo-v2.5-asr` + `input_audio`（data URI）+ `asr_options.language`
-- 结果取 `choices[0].message.content`
-
-> 该接口是**一段式**（录完再传），不是流式，所以没有逐句上屏；按住说话期间窗口只显示录音状态，松开后 1~3 秒出全文。
+- 请求头 `api-key: tp-...`，模型 `mimo-v2.5-asr`，音频以 `input_audio` data URI 提交
+- 结果取 `choices[0].message.content`；该接口为**整段式**（无流式），故客户端做「停顿切段 + 流水识别」实现实时感
 
 ## API Key 配置
 
-优先级：环境变量 > `%APPDATA%\Voice2Txt\config.txt`。环境变量名（任选其一）：
+优先级：环境变量 > `%APPDATA%\Voice2Txt\config.txt`：
 
 ```powershell
-$env:MIMO_API_KEY = "tp-..."
-# 或 DASHSCOPE_API_KEY / ALIYUN_API_KEY / VOICE_TO_TEXT_API_KEY
+$env:MIMO_API_KEY = "tp-..."   # 或 DASHSCOPE_API_KEY / ALIYUN_API_KEY / VOICE_TO_TEXT_API_KEY
 ```
 
-配置文件可参考 `config.example.txt`，在设置窗口里改会自动保存。**请勿把真实 Key 写进仓库、提交记录或截图**；泄露后立即到 Token Plan 控制台撤销重建。
+配置文件可参考 `config.example.txt`。**请勿把真实 Key 写进仓库、提交记录或截图**；泄露后立即到 Token Plan 控制台撤销重建。
 
-## 使用
+## 从源码构建
 
-| 操作 | 效果 |
-|---|---|
-| **长按 `Fn`**（默认，可在设置里改） | 开始录音（点按忽略） |
-| 松开 | 结束识别，自动粘贴到前台窗口 |
-| 按住「按住说话」按钮 | 同上（鼠标操作） |
-| 设置 → 录制热键… | 按下任意键实测绑定（Fn 等非常规键必须用这个） |
-| 再次插入 | 把窗口文字重新粘贴出去 |
-| 复制 / 清空 / 历史 | 剪贴板、清框、历史记录（双击条目复制） |
-| 关闭窗口 | 缩到托盘，热键继续可用 |
-| 托盘 → 退出 | 真正退出 |
+```powershell
+.\build.ps1            # 产出 bin\Voice2Txt.exe（win-arm64 单文件）
+.\build.ps1 -InstallSdk # 没装 .NET SDK 8 时先装（arm64）
+.\run.ps1              # 不构建直接跑（PowerShell 7 内存编译）
+```
 
-热键格式：`Fn` / `Ctrl+Shift+Space` / `Alt+F2` / `VK:500`（录制捕获的原始键 id）。
-
-### 关于 Fn 键
-
-Fn 是键盘固件层的键，多数键盘不向系统上报——但相当一部分键盘（尤其笔记本、Mac 键盘）会在 Raw Input 里以「未映射键」出现，本程序正是靠 Raw Input 捕获它们。如果你的 Fn 按下后**完全无反应**，说明键盘根本没上报它（软件无法绑定），请到「设置 → 录制热键」换绑其它键。
-
-## 构建选项（ARM64 相关）
-
-| 命令 | 产物 | 架构 |
+| 命令 | 产物 | 说明 |
 |---|---|---|
-| `.\build.ps1` | `bin\Voice2Txt.exe` | 有 .NET SDK 时 = **原生 win-arm64** 单文件；无 SDK 时 = .NET Framework 独立 exe（ARM64 Windows 上走 x64 模拟，功能无差别） |
-| `.\build.ps1 -InstallSdk` | — | winget 安装 .NET SDK 8（arm64），装完重开终端再构建即得原生 exe |
-| `.\build.ps1 -SelfContained` | 较大单文件 | SDK 路径下打包运行时，目标机器无需装 .NET |
-| `.\run.ps1` | 无产物 | PowerShell 7 内存编译直接跑（进程即本机架构） |
+| `.\build.ps1` | win-arm64 单文件 exe | 需 .NET SDK 8；图标嵌入 exe |
+| `.\build.ps1 -SelfContained` | 较大单文件 | 目标机器无需装 .NET |
+| `.\build.ps1`（无 SDK 时） | .NET Framework 独立 exe | 兜底路径，ARM64 上走模拟 |
 
 ## 目录结构
 
 ```
-Voice2Txt.cs        全部源码（C# 5 语法，单文件）
+Voice2Txt.cs        全部源码（单文件）
 run.ps1             开发运行（内存编译）
-build.ps1           构建 exe（SDK 原生 / 5.1 兜底两条路）
-config.example.txt  配置文件示例
-bin\Voice2Txt.exe   构建产物
-build\              SDK 构建的临时工程
+build.ps1           构建脚本（SDK 原生 / 5.1 兜底）
+index.html          GitHub Pages 项目主页
+config.example.txt  配置示例
+assets/             Material 图标生成脚本与 icon.ico
+build/              SDK 构建的工程文件
 ```
-
-## 实现对照（与 voicestick-mindex 的关系）
-
-| 模块 | macOS 版（DashScope） | Windows 版（MiMo Token Plan） |
-|---|---|---|
-| 识别 | WS 流式、逐句上屏 | HTTP 一段式（接口所限），全文返回 |
-| 采集 | AVAudioEngine + 重采样到 16k | winmm `waveIn`，16k 直采，设备不支持时 44.1k/48k 线性重采样，WAV 封装上传 |
-| 热键 | `⌘⇧空格` 按住 | `Fn` 长按（Raw Input 捕获 + 250ms 长按阈值），可录制绑定 |
-| 自动插入 | CGEvent `⌘V` | `keybd_event` `Ctrl+V`，记录录音时的前台窗口用于「再次插入」 |
-| 配置 | 环境变量 / config.plist | 环境变量 / config.txt |
-| 历史 | 本地保存 | `%APPDATA%\Voice2Txt\history.jsonl` |
 
 ## 故障排查
 
-- **「麦克风错误」**：系统设置 → 隐私 → 麦克风，允许应用访问
+- **麦克风错误 / 没录到声音**：系统设置 → 隐私 → 麦克风，允许桌面应用访问
 - **识别报错 401 Invalid API Key**：确认 Key 是 Token Plan `tp-` 开头、集群（BASE_URL）选对（cn/sgp/ams）
-- **Fn 没反应**：见上文「关于 Fn 键」；用设置里的「录制热键」实测绑定，捕获不到就换键
-- **粘贴没进目标窗口**：用「再次插入」按钮；或先点一下目标窗口再按住说话
+- **热键没反应**：设置 → 录制热键 实测绑定；某些键盘 Fn 不上报系统，需换键
+- **粘贴没进目标窗口**：用「再次插入」按钮；或先点一下目标窗口再说话
+
+## License
+
+MIT
