@@ -72,7 +72,7 @@ if ($dotnet -and -not $ForceFramework) {
     & dotnet publish (Join-Path $projDir 'Voice2Txt.csproj') -c Release -o $outDir
     if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed.' }
     Copy-Item (Join-Path $root 'assets\icon.ico') (Join-Path $outDir 'icon.ico') -Force
-    Write-Host "Built (native win-arm64): $exe"
+    Write-Host "Built (native win-$Arch): $exe"
     return
 }
 

@@ -1817,7 +1817,21 @@ namespace Voice2Txt
             AppLog.Log("TrayContext: form.Show()");
             form.Show();
             AppLog.Log("TrayContext: form shown, handle=" + form.Handle);
+
+            // Another launch of the exe (icon double-click etc.) signals us to
+            // raise the window instead of starting a second copy.
+            SingleInstance.SetShowHandler(delegate
+            {
+                if (form.IsDisposed) return;
+                if (form.IsHandleCreated && form.InvokeRequired)
+                    form.BeginInvoke(new MethodInvoker(ShowMain));
+                else
+                    ShowMain();
+            });
         }
+
+        [DllImport("user32.dll")]
+        static extern bool SetForegroundWindow(IntPtr hWnd);
 
         void ShowMain()
         {
@@ -1825,6 +1839,8 @@ namespace Voice2Txt
             form.Show();
             form.WindowState = FormWindowState.Normal;
             form.Activate();
+            form.BringToFront();
+            try { SetForegroundWindow(form.Handle); } catch { }
         }
 
         void Exit()
@@ -1833,6 +1849,79 @@ namespace Voice2Txt
             tray.Dispose();
             monitor.Dispose();
             Application.Exit();
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Single-instance guard: a second start must not spin up another copy
+    // (two copies fight over the raw-key hook / tray icon); it just asks the
+    // running instance to raise its window and then exits.
+    // ------------------------------------------------------------------
+    public static class SingleInstance
+    {
+        const string MutexName = "Local\\Voice2Txt_SingleInstance";
+        const string ShowEventName = "Local\\Voice2Txt_ShowWindow";
+        const int AsfwAny = -1;              // AllowSetForegroundWindow: any process
+
+        static Mutex mutex;
+        static EventWaitHandle showEvent;
+        static RegisteredWaitHandle regWait;
+        static Action showMain;
+
+        [DllImport("user32.dll")]
+        static extern bool AllowSetForegroundWindow(int dwProcessId);
+
+        // True  -> this process owns the app and should start normally.
+        // False -> another instance is running (it was told to show its window).
+        public static bool Acquire()
+        {
+            bool createdNew;
+            mutex = new Mutex(true, MutexName, out createdNew);
+            if (!createdNew)
+            {
+                AppLog.Log("SingleInstance: another instance is running, asking it to show the window");
+                Signal();
+                return false;
+            }
+            try
+            {
+                // Created eagerly so early "second" clicks can always reach us.
+                showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
+                regWait = ThreadPool.RegisterWaitForSingleObject(
+                    showEvent, OnShowSignal, null, -1, false);
+            }
+            catch (Exception ex) { AppLog.Log("SingleInstance: watch failed: " + ex.Message); }
+            return true;
+        }
+
+        // The tray context installs the "raise the window" callback once its UI
+        // is up (signals that arrive before that are simply dropped).
+        public static void SetShowHandler(Action handler)
+        {
+            showMain = handler;
+        }
+
+        static void OnShowSignal(object state, bool timedOut)
+        {
+            AppLog.Log("SingleInstance: show signal received");
+            Action a = showMain;
+            if (a == null) return;
+            try { a(); }
+            catch (Exception ex) { AppLog.Log("SingleInstance: show failed: " + ex.Message); }
+        }
+
+        static void Signal()
+        {
+            try
+            {
+                // This fresh process is the foreground one (the user just
+                // clicked its icon); grant the running instance permission to
+                // steal the foreground when it raises its window.
+                try { AllowSetForegroundWindow(AsfwAny); } catch { }
+                using (EventWaitHandle h = EventWaitHandle.OpenExisting(ShowEventName))
+                    h.Set();
+            }
+            catch (Exception ex) { AppLog.Log("SingleInstance: signal failed: " + ex.Message); }
         }
     }
 
@@ -1883,6 +1972,12 @@ namespace Voice2Txt
             AppLog.Log("==== Run() start, pid=" + Process.GetCurrentProcess().Id
                 + " os=" + Environment.OSVersion + " 64bit=" + Environment.Is64BitProcess
                 + " arch=" + RuntimeInformation.ProcessArchitecture);
+            if (!SingleInstance.Acquire())
+            {
+                // Already running: the first instance raises its window; quit.
+                AppLog.Log("==== Run() exit: single-instance guard, another copy is running");
+                return;
+            }
             AppDomain.CurrentDomain.UnhandledException += delegate(object s, UnhandledExceptionEventArgs e)
             {
                 AppLog.Log("FATAL: " + e.ExceptionObject);
