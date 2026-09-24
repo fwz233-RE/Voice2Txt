@@ -1194,7 +1194,7 @@ namespace Voice2Txt
             ClientSize = new Size(440, 300);
 
             Label keyLabel = new Label();
-            keyLabel.Text = "API Key（tp- 开头 = Token Plan；其它 = 官方订阅，自动识别）:";
+            keyLabel.Text = "API Key:";
             keyLabel.SetBounds(12, 12, 400, 20);
             keyBox = new TextBox();
             keyBox.SetBounds(12, 34, 416, 24);
