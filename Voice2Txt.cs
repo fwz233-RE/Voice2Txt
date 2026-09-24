@@ -1243,26 +1243,21 @@ namespace Voice2Txt
             autoStartBox.SetBounds(12, 204, 200, 24);
             autoStartBox.Checked = AppIcon.GetAutoStart();
 
-            Label hint = new Label();
-            hint.Text = "保存位置: " + AppConfig.ConfigPath();
-            hint.SetBounds(12, 232, 416, 32);
-            hint.ForeColor = Color.Gray;
-
             Button ok = new Button();
             ok.Text = "保存";
             ok.DialogResult = DialogResult.OK;
-            ok.SetBounds(252, 268, 85, 30);
+            ok.SetBounds(252, 240, 85, 30);
             Button cancel = new Button();
             cancel.Text = "取消";
             cancel.DialogResult = DialogResult.Cancel;
-            cancel.SetBounds(343, 268, 85, 30);
+            cancel.SetBounds(343, 240, 85, 30);
 
             AcceptButton = ok;
             CancelButton = cancel;
             Controls.AddRange(new Control[] {
                 keyLabel, keyBox, hotkeyLabel, hotkeyBox, captureBtn, captureStatus,
-                langLabel, langBox, pasteBox, autoStartBox, hint, ok, cancel });
-            ClientSize = new Size(440, 314);
+                langLabel, langBox, pasteBox, autoStartBox, ok, cancel });
+            ClientSize = new Size(440, 284);
         }
 
         void OnKeyCaptured(int id)
@@ -1809,6 +1804,10 @@ namespace Voice2Txt
             tray.Icon = AppIcon.Get();
             tray.Text = "Voice2Txt — 长按 " + monitor.Combo.Display + " 说话";
             tray.ContextMenuStrip = menu;
+            tray.MouseClick += delegate(object s, MouseEventArgs e)
+            {
+                if (e.Button == MouseButtons.Left) ShowMain();   // single click opens the panel
+            };
             tray.DoubleClick += delegate { ShowMain(); };
             tray.Visible = true;
 
