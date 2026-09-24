@@ -15,7 +15,7 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
         'System.ComponentModel.TypeConverter', 'System.Private.Windows.Core',
         'System.Collections', 'System.Runtime', 'System.Runtime.InteropServices',
         'System.Threading', 'System.Threading.Tasks', 'System.Threading.Thread', 'System.IO', 'System.Linq',
-        'System.Diagnostics.Process', 'Microsoft.Win32.Primitives',
+        'System.Diagnostics.Process', 'Microsoft.Win32.Primitives', 'Microsoft.Win32.Registry',
         'System.Net.Primitives', 'System.Net.Requests', 'System.Net.Http',
         'System.Net.WebSockets', 'System.Net.WebSockets.Client',
         'System.Text.Encoding.Extensions'

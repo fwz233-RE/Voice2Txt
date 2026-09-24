@@ -43,15 +43,20 @@ Windows 桌面语音输入小工具：**按住 `Ctrl+Alt` 说话**（热键可�
 
 ## 识别接口
 
-小米开放平台 Token Plan（OpenAI 兼容格式）：
+小米 MiMo-V2.5-ASR（OpenAI 兼容格式），**双订阅自动识别**：
 
-- `POST https://token-plan-cn.xiaomimimo.com/v1/chat/completions`（集群 cn/sgp/ams 换 BASE_URL）
-- 请求头 `api-key: tp-...`，模型 `mimo-v2.5-asr`，音频以 `input_audio` data URI 提交
-- 结果取 `choices[0].message.content`；该接口为**整段式**（无流式），故客户端做「停顿切段 + 流水识别」实现实时感
+| Key 类型 | 端点 | 鉴权 |
+|---|---|---|
+| Token Plan（`tp-` 开头） | `https://token-plan-{cn,sgp,ams}.xiaomimimo.com/v1/chat/completions` | `api-key` |
+| 官方开放平台订阅 | `https://api.xiaomimimo.com/v1/chat/completions` | `api-key` 或 `Bearer`（两种都发） |
+
+- 程序按 Key 前缀自动选端点；`config.txt` 的 `BASE_URL` 可手动覆盖（如指定 sgp/ams 集群）
+- 请求体：`model=mimo-v2.5-asr` + `input_audio` data URI + `asr_options.language`，结果取 `choices[0].message.content`
+- 该接口为**整段式**（无流式），故客户端做「停顿切段 + 流水识别」实现实时感
 
 ## API Key 配置
 
-优先级：环境变量 > `%APPDATA%\Voice2Txt\config.txt`：
+优先级：环境变量 > `%APPDATA%\Voice2Txt\config.txt`（Key 类型自动识别，tp- 走 Token Plan，其它走官方订阅）：
 
 ```powershell
 $env:MIMO_API_KEY = "tp-..."   # 或 DASHSCOPE_API_KEY / ALIYUN_API_KEY / VOICE_TO_TEXT_API_KEY
@@ -88,7 +93,7 @@ build/              SDK 构建的工程文件
 ## 故障排查
 
 - **麦克风错误 / 没录到声音**：系统设置 → 隐私 → 麦克风，允许桌面应用访问
-- **识别报错 401 Invalid API Key**：确认 Key 是 Token Plan `tp-` 开头、集群（BASE_URL）选对（cn/sgp/ams）
+- **识别报错 401 Invalid API Key**：确认订阅类型与 Key 匹配（tp- → Token Plan；普通 → 官方接口）；必要时在 config.txt 用 `BASE_URL` 指定集群
 - **热键没反应**：设置 → 录制热键 实测绑定；某些键盘 Fn 不上报系统，需换键
 - **粘贴没进目标窗口**：用「再次插入」按钮；或先点一下目标窗口再说话
 

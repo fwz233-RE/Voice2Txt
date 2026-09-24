@@ -52,7 +52,7 @@
     <div class="card"><h3>🎙 按住说话</h3><p>全局热键（默认 Ctrl+Alt，支持录制绑定 Fn 等非常规键）按住录音、松开识别，点按不误触。</p></div>
     <div class="card"><h3>⚡ 准实时上屏</h3><p>停顿即切段流水识别，说一两句停一下，文字逐段跳进面板，不必等松开。</p></div>
     <div class="card"><h3>📌 自动插入</h3><p>识别完成自动写入剪贴板并 Ctrl+V 到前台窗口；面板自动呼出、自动消失。</p></div>
-    <div class="card"><h3>🧠 MiMo 识别</h3><p>小米 MiMo-V2.5-ASR（Token Plan），中文/方言/中英混说/歌声均擅长，原生标点。</p></div>
+    <div class="card"><h3>🧠 MiMo 识别</h3><p>小米 MiMo-V2.5-ASR，中文/方言/中英混说/歌声均擅长，原生标点。官方订阅与 Token Plan 双支持，按 Key 自动识别。</p></div>
     <div class="card"><h3>🗂 本地历史</h3><p>识别记录只存本机 %APPDATA%，双击即复制；API Key 仅存环境变量/本地配置。</p></div>
     <div class="card"><h3>🪶 轻量原生</h3><p>单文件约 300KB，win-arm64 原生构建，托盘常驻，开机自启可选。</p></div>
   </div>
@@ -60,7 +60,7 @@
   <h2>快速开始</h2>
   <table>
     <tr><th>1. 下载解压</th><td>下载 <code>Voice2Txt-win-arm64-v0.1.0.zip</code>，解压得到 <code>Voice2Txt.exe</code>（单文件，图标已内置）</td></tr>
-    <tr><th>2. 配置 Key</th><td>首次运行弹出设置，粘贴 Token Plan API Key（<code>tp-</code> 开头）；或设环境变量 <code>MIMO_API_KEY</code></td></tr>
+    <tr><th>2. 配置 Key</th><td>首次运行弹出设置，粘贴 API Key（Token Plan 为 <code>tp-</code> 开头，官方订阅同理可用），自动识别订阅类型；或设环境变量 <code>MIMO_API_KEY</code></td></tr>
     <tr><th>3. 说话</th><td>光标点进任意输入框 → 按住 <code>Ctrl+Alt</code> 说话 → 松开，文字自动插入</td></tr>
     <tr><th>热键</th><td>设置里可改（<code>Fn</code> / <code>Alt+F2</code> / <code>VK:500</code>…），支持「录制热键」实测绑定</td></tr>
     <tr><th>开机自启</th><td>设置 → 开机自启动（写入 HKCU Run 键）</td></tr>

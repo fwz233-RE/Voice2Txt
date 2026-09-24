@@ -356,9 +356,21 @@ namespace Voice2Txt
         public string ApiKey = "";
         public string Hotkey = "Fn";
         public string Model = "mimo-v2.5-asr";
-        public string BaseUrl = "https://token-plan-cn.xiaomimimo.com/v1/chat/completions";
+        public string BaseUrl = "";   // empty = auto by key prefix (see ResolveBaseUrl)
         public string Language = "auto";
         public bool AutoPaste = true;
+
+        public const string TokenPlanUrl = "https://token-plan-cn.xiaomimimo.com/v1/chat/completions";
+        public const string OfficialUrl = "https://api.xiaomimimo.com/v1/chat/completions";
+
+        // Token Plan keys start with "tp-" and use the token-plan-* clusters;
+        // regular MiMo open-platform keys use the official endpoint.
+        public string ResolveBaseUrl()
+        {
+            string url = BaseUrl == null ? "" : BaseUrl.Trim();
+            if (url.Length > 0) return url;
+            return ApiKey.Trim().StartsWith("tp-") ? TokenPlanUrl : OfficialUrl;
+        }
 
         static string ConfigDir()
         {
@@ -400,7 +412,7 @@ namespace Voice2Txt
             string v;
             if (values.TryGetValue("HOTKEY", out v) && v.Length > 0) cfg.Hotkey = v;
             if (values.TryGetValue("MODEL", out v) && v.Length > 0) cfg.Model = v;
-            if (values.TryGetValue("BASE_URL", out v) && v.Length > 0) cfg.BaseUrl = v;
+            if (values.TryGetValue("BASE_URL", out v)) cfg.BaseUrl = v;
             if (values.TryGetValue("LANGUAGE", out v) && v.Length > 0) cfg.Language = v;
             if (values.TryGetValue("AUTO_PASTE", out v)) cfg.AutoPaste = (v == "1" || v.ToLowerInvariant() == "true");
             return cfg;
@@ -777,7 +789,8 @@ namespace Voice2Txt
         {
             string apiKey = config.ApiKey.Trim();
             if (apiKey.Length == 0)
-                throw new InvalidOperationException("请先在设置中填入 Token Plan API Key（tp- 开头）。");
+                throw new InvalidOperationException("请先在设置中填入 API Key（Token Plan 为 tp- 开头，官方订阅为 MIMO_API_KEY）。");
+            string baseUrl = config.ResolveBaseUrl();
 
             string dataUri = "data:audio/wav;base64," + Convert.ToBase64String(wavBytes);
 
@@ -803,9 +816,12 @@ namespace Voice2Txt
             using (HttpClient http = new HttpClient())
             {
                 http.Timeout = TimeSpan.FromSeconds(180);
-                using (HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, config.BaseUrl))
+                using (HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, baseUrl))
                 {
+                    // both auth styles accepted by the platform: send both so any
+                    // subscription type (official / Token Plan) just works
                     req.Headers.Add("api-key", apiKey);
+                    req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
                     req.Content = new StringContent(MiniJson.Write(body), Encoding.UTF8, "application/json");
                     HttpResponseMessage resp = await http.SendAsync(req);
                     string json = await resp.Content.ReadAsStringAsync();
@@ -817,6 +833,8 @@ namespace Voice2Txt
                         string message = MiniJson.GetString(MiniJson.Get(node, "error"), "message");
                         if (message == null && json.Length > 0) message = json.Substring(0, Math.Min(200, json.Length));
                         if (message == null) message = "HTTP " + (int)resp.StatusCode;
+                        if ((int)resp.StatusCode == 401)
+                            message = message + "（请核对 Key 类型：tp- 开头走 Token Plan 集群，官方订阅走 api.xiaomimimo.com；可在 config.txt 用 BASE_URL 覆盖，当前：" + baseUrl + "）";
                         throw new InvalidOperationException(message);
                     }
                     AsrResult result = new AsrResult();
@@ -1176,7 +1194,7 @@ namespace Voice2Txt
             ClientSize = new Size(440, 300);
 
             Label keyLabel = new Label();
-            keyLabel.Text = "Token Plan API Key（tp- 开头，仅存本机）:";
+            keyLabel.Text = "API Key（tp- 开头 = Token Plan；其它 = 官方订阅，自动识别）:";
             keyLabel.SetBounds(12, 12, 400, 20);
             keyBox = new TextBox();
             keyBox.SetBounds(12, 34, 416, 24);
