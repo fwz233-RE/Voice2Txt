@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RuntimeIdentifier>win-arm64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <AssemblyName>Voice2Txt</AssemblyName>
+    <RootNamespace>Voice2Txt</RootNamespace>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ApplicationIcon>..\assets\icon.ico</ApplicationIcon>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Voice2Txt.cs" />
+    <EmbeddedResource Include="..\assets\icon.ico" Link="icon.ico" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,15 @@
+# Voice2Txt local config (save as %APPDATA%\Voice2Txt\config.txt or export as env vars)
+# API_KEY is the Token Plan key that starts with tp- (cluster: cn)
+API_KEY=your-key-here
+# Push-to-talk hotkey: HOLD to record (quick taps are ignored). "Fn" works via
+# raw input; use the "录制热键" button in Settings to bind stubborn keys.
+# Examples: Fn | Ctrl+Shift+Space | Alt+F2 | VK:500
+HOTKEY=Fn
+# ASR model on the Token Plan endpoint
+MODEL=mimo-v2.5-asr
+# Token Plan cluster: cn / sgp / ams
+BASE_URL=https://token-plan-cn.xiaomimimo.com/v1/chat/completions
+# Recognition language: auto / zh / en
+LANGUAGE=auto
+# 1 = paste into the focused window after recognition
+AUTO_PASTE=1

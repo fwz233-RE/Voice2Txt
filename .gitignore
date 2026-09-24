@@ -1,0 +1,13 @@
+bin/
+build/bin/
+build/obj/
+dist/
+*.log
+*.err
+*.out
+*.user
+.gherr
+.ghout
+.stdin
+.tone.wav
+assets/MaterialSymbolsRounded.ttf

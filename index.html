@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice2Txt — Windows 语音转文字</title>
+<style>
+  :root { --blue:#1E88E5; --blue-dark:#1565C0; --ink:#1f2328; --muted:#5f6a7a; --bg:#f6f9fc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:"Segoe UI","Microsoft YaHei UI",system-ui,sans-serif; color:var(--ink); background:var(--bg); line-height:1.7; }
+  .hero { background:linear-gradient(160deg,var(--blue),var(--blue-dark)); color:#fff; padding:72px 24px 56px; text-align:center; }
+  .hero img { width:112px; height:112px; border-radius:26px; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+  .hero h1 { font-size:2.4rem; margin:18px 0 6px; letter-spacing:.5px; }
+  .hero p { opacity:.92; font-size:1.05rem; max-width:640px; margin:0 auto; }
+  .btns { margin-top:28px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+  .btn { display:inline-block; padding:12px 26px; border-radius:999px; text-decoration:none; font-weight:600; transition:.15s; }
+  .btn.solid { background:#fff; color:var(--blue-dark); }
+  .btn.solid:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,.2); }
+  .btn.ghost { border:1.5px solid rgba(255,255,255,.7); color:#fff; }
+  .btn.ghost:hover { background:rgba(255,255,255,.12); }
+  main { max-width:920px; margin:0 auto; padding:40px 24px 72px; }
+  h2 { font-size:1.3rem; margin:36px 0 14px; color:var(--blue-dark); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+  .card { background:#fff; border-radius:16px; padding:22px 22px 18px; box-shadow:0 1px 4px rgba(20,40,80,.08); }
+  .card h3 { font-size:1.02rem; margin-bottom:6px; }
+  .card p { color:var(--muted); font-size:.94rem; }
+  table { width:100%; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 1px 4px rgba(20,40,80,.08); border-collapse:collapse; }
+  td, th { padding:11px 18px; text-align:left; border-bottom:1px solid #eef2f7; font-size:.95rem; }
+  th { background:#f0f5fb; width:220px; white-space:nowrap; }
+  code { background:#eef2f7; padding:2px 7px; border-radius:6px; font-size:.9em; }
+  pre { background:#10233d; color:#dce8f7; padding:16px 18px; border-radius:14px; overflow:auto; font-size:.88rem; }
+  .note { background:#fff8e1; border-left:4px solid #f5b301; padding:12px 16px; border-radius:8px; font-size:.93rem; margin-top:14px; }
+  footer { text-align:center; color:var(--muted); font-size:.86rem; padding:26px 0 40px; }
+  footer a { color:var(--blue-dark); text-decoration:none; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <img src="data:image/png;base64,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" alt="Voice2Txt icon">
+  <h1>Voice2Txt</h1>
+  <p>Windows 语音转文字小工具 —— 按住热键说话，松开后文字自动插入光标处。<br>
+     轻量单文件 · 原生 ARM64 · 小米 MiMo-V2.5-ASR 识别</p>
+  <div class="btns">
+    <a class="btn solid" href="releases/latest">⬇ 下载 Voice2Txt-win-arm64</a>
+    <a class="btn ghost" href="https://github.com/fwz233-RE/Voice2Txt">源码</a>
+  </div>
+</header>
+
+<main>
+  <h2>功能特性</h2>
+  <div class="grid">
+    <div class="card"><h3>🎙 按住说话</h3><p>全局热键（默认 Ctrl+Alt，支持录制绑定 Fn 等非常规键）按住录音、松开识别，点按不误触。</p></div>
+    <div class="card"><h3>⚡ 准实时上屏</h3><p>停顿即切段流水识别，说一两句停一下，文字逐段跳进面板，不必等松开。</p></div>
+    <div class="card"><h3>📌 自动插入</h3><p>识别完成自动写入剪贴板并 Ctrl+V 到前台窗口；面板自动呼出、自动消失。</p></div>
+    <div class="card"><h3>🧠 MiMo 识别</h3><p>小米 MiMo-V2.5-ASR（Token Plan），中文/方言/中英混说/歌声均擅长，原生标点。</p></div>
+    <div class="card"><h3>🗂 本地历史</h3><p>识别记录只存本机 %APPDATA%，双击即复制；API Key 仅存环境变量/本地配置。</p></div>
+    <div class="card"><h3>🪶 轻量原生</h3><p>单文件约 300KB，win-arm64 原生构建，托盘常驻，开机自启可选。</p></div>
+  </div>
+
+  <h2>快速开始</h2>
+  <table>
+    <tr><th>1. 下载解压</th><td>下载 <code>Voice2Txt-win-arm64-v0.1.0.zip</code>，解压得到 <code>Voice2Txt.exe</code>（单文件，图标已内置）</td></tr>
+    <tr><th>2. 配置 Key</th><td>首次运行弹出设置，粘贴 Token Plan API Key（<code>tp-</code> 开头）；或设环境变量 <code>MIMO_API_KEY</code></td></tr>
+    <tr><th>3. 说话</th><td>光标点进任意输入框 → 按住 <code>Ctrl+Alt</code> 说话 → 松开，文字自动插入</td></tr>
+    <tr><th>热键</th><td>设置里可改（<code>Fn</code> / <code>Alt+F2</code> / <code>VK:500</code>…），支持「录制热键」实测绑定</td></tr>
+    <tr><th>开机自启</th><td>设置 → 开机自启动（写入 HKCU Run 键）</td></tr>
+  </table>
+
+  <h2>从源码构建</h2>
+  <pre># 需要 .NET SDK 8（arm64）
+.\build.ps1            # 产出 bin\Voice2Txt.exe（win-arm64 单文件）
+.\build.ps1 -InstallSdk # 没装 SDK 时先装
+.\run.ps1              # 不构建直接跑（PowerShell 7）</pre>
+
+  <h2>隐私与安全</h2>
+  <div class="note">
+    🔒 API Key <b>只存在你的电脑上</b>（环境变量或 %APPDATA%\Voice2Txt\config.txt），不进源码、不进构建产物、不进仓库。
+    语音仅在识别时发送给小米开放平台接口，历史记录纯本地保存。
+  </div>
+</main>
+
+<footer>
+  Voice2Txt v0.1.0 · MIT License · 由 <a href="https://github.com/fwz233-RE">fwz233-RE</a> 用 ❤ 构建
+</footer>
+</body>
+</html>
