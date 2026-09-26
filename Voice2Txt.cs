@@ -1191,6 +1191,13 @@ namespace Voice2Txt
             MaximizeBox = false;
             MinimizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
+            // The pixel values below are authored at 96 DPI. AutoScaleMode.Dpi
+            // makes WinForms scale every control for the actual monitor DPI
+            // (e.g. 150% -> 1.5x) and keeps rescaling on DPI changes, so the UI
+            // stays sharp and correctly sized instead of bitmap-stretched.
+            SuspendLayout();
+            AutoScaleDimensions = new SizeF(96f, 96f);
+            AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(440, 300);
 
             Label keyLabel = new Label();
@@ -1258,6 +1265,7 @@ namespace Voice2Txt
                 keyLabel, keyBox, hotkeyLabel, hotkeyBox, captureBtn, captureStatus,
                 langLabel, langBox, pasteBox, autoStartBox, ok, cancel });
             ClientSize = new Size(440, 284);
+            ResumeLayout(true);
         }
 
         void OnKeyCaptured(int id)
@@ -1311,6 +1319,10 @@ namespace Voice2Txt
         {
             Text = "识别历史（双击复制）";
             StartPosition = FormStartPosition.CenterParent;
+            // 96-DPI design values; scaled for the real monitor DPI (see SettingsForm)
+            SuspendLayout();
+            AutoScaleDimensions = new SizeF(96f, 96f);
+            AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(520, 380);
             list = new ListBox();
             list.Dock = DockStyle.Fill;
@@ -1325,6 +1337,7 @@ namespace Voice2Txt
                 }
             };
             Controls.Add(list);
+            ResumeLayout(true);
         }
     }
 
@@ -1378,6 +1391,10 @@ namespace Voice2Txt
             Icon = AppIcon.Get();
             StartPosition = FormStartPosition.CenterScreen;
             MinimumSize = new Size(480, 320);
+            // 96-DPI design values; scaled for the real monitor DPI (see SettingsForm)
+            SuspendLayout();
+            AutoScaleDimensions = new SizeF(96f, 96f);
+            AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(560, 380);
             BackColor = Color.White;
 
@@ -1446,6 +1463,7 @@ namespace Voice2Txt
             mic.Data += OnMicData;
             AppLog.Log("MainForm: ctor done");
             SetStatus("就绪 — 长按 " + monitor.Combo.Display + " 说话（点按无效），或按住「按住说话」按钮");
+            ResumeLayout(true);
         }
 
         Button MakeButton(string label, EventHandler onClick)
@@ -1930,8 +1948,32 @@ namespace Voice2Txt
     // ------------------------------------------------------------------
     public static class Program
     {
+        // ---- DPI awareness ----------------------------------------------------
+        // A merely system-DPI-aware window gets bitmap-stretched (i.e. blurry)
+        // whenever the display scale changes or the window lands on a monitor
+        // with a different DPI. Ask for Per-Monitor V2 first and fall back on
+        // older Windows. Must run before any window handle is created.
+        static readonly IntPtr PerMonitorAwareV2 = new IntPtr(-4);
+        const int ProcessPerMonitorDpiAware = 2;
+
+        [DllImport("user32.dll")]
+        static extern bool SetProcessDpiAwarenessContext(IntPtr value);
+
+        [DllImport("shcore.dll")]
+        static extern int SetProcessDpiAwareness(int value);
+
         [DllImport("user32.dll")]
         static extern bool SetProcessDPIAware();
+
+        static void EnableHighDpi()
+        {
+            try { if (SetProcessDpiAwarenessContext(PerMonitorAwareV2)) return; }
+            catch { }
+            try { if (SetProcessDpiAwareness(ProcessPerMonitorDpiAware) == 0) return; }
+            catch { }
+            try { SetProcessDPIAware(); }
+            catch { }
+        }
 
         [STAThread]
         public static void Main()
@@ -1969,6 +2011,7 @@ namespace Voice2Txt
 
         public static void Run()
         {
+            EnableHighDpi();
             AppLog.Log("==== Run() start, pid=" + Process.GetCurrentProcess().Id
                 + " os=" + Environment.OSVersion + " 64bit=" + Environment.Is64BitProcess
                 + " arch=" + RuntimeInformation.ProcessArchitecture);
@@ -1986,8 +2029,6 @@ namespace Voice2Txt
             {
                 AppLog.Log("UI EXCEPTION: " + e.Exception);
             };
-            try { SetProcessDPIAware(); }
-            catch { }
             EnableTls12();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);

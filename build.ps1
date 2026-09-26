@@ -60,6 +60,9 @@ if ($dotnet -and -not $ForceFramework) {
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
     <ApplicationIcon>..\assets\icon.ico</ApplicationIcon>
+    <ApplicationManifest>..\assets\app.manifest</ApplicationManifest>
+    <!-- Per-Monitor V2: no bitmap-stretched (blurry) windows at 150% etc. -->
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
   <ItemGroup>
